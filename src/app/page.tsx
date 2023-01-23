@@ -106,7 +106,8 @@ export default function Home() {
                 {data?.catFacts.map((catFact) => (
                     <CatFactCard
                         key={catFact.id}
-                        {...catFact}
+                        title={catFact.title}
+                        description={catFact.description}
                         onClick={() => {
                             deleteCatFact({
                                 variables: {

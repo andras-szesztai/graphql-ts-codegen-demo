@@ -5,7 +5,7 @@ import { Inter } from '@next/font/google'
 import { CatFact } from '@/lib/types/CatFact'
 import styles from '@/app/page.module.css'
 
-type Props = CatFact & {
+type Props = Omit<CatFact, 'id'> & {
     onClick: () => void
 }
 
