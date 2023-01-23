@@ -1,91 +1,129 @@
-import Image from 'next/image'
+'use client'
+
 import { Inter } from '@next/font/google'
+import { useMutation, useQuery } from '@apollo/client'
+import { useState } from 'react'
+
+import {
+    CREATE_CAT_FACT,
+    DELETE_CAT_FACT,
+    READ_ALL_CAT_FACTS,
+} from '@/lib/operations/catFacts'
+
 import styles from './page.module.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
+type CatFact = {
+    id: string
+    title: string
+    description: string
+}
+
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    const [title, setTitle] = useState('')
+    const [description, setDescription] = useState('')
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
-        </div>
-      </div>
+    const { loading, error, data } = useQuery<{
+        catFacts: CatFact[]
+    }>(READ_ALL_CAT_FACTS)
 
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+    const [createCatFact] = useMutation(CREATE_CAT_FACT, {
+        update(cache, { data: { createCatFact } }) {
+            cache.modify({
+                fields: {
+                    catFacts(existingCatFacts: CatFact[] = []) {
+                        return [
+                            {
+                                __typename: 'CatFact',
+                                id: createCatFact.id,
+                                title: createCatFact.title,
+                                description: createCatFact.description,
+                            },
+                            ...existingCatFacts,
+                        ]
+                    },
+                },
+            })
+        },
+        onCompleted: () => {
+            setTitle('')
+            setDescription('')
+        },
+    })
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
+    const [deleteCatFact] = useMutation(DELETE_CAT_FACT, {
+        update(cache, { data: { deleteCatFact } }) {
+            cache.modify({
+                fields: {
+                    catFacts(existingCatFacts: CatFact[] = []) {
+                        return [
+                            ...existingCatFacts.filter(
+                                (catFact) => catFact.id !== deleteCatFact.id
+                            ),
+                        ]
+                    },
+                },
+            })
+        },
+    })
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    return (
+        <main className={styles.main}>
+            <div className={styles.center}>
+                <h1 className={styles.description}>🐈‍⬛ CAT FACTS 🐈</h1>
+                <input
+                    className={styles.input}
+                    placeholder="title"
+                    value={title}
+                    onChange={(e) => {
+                        setTitle(e.target.value)
+                    }}
+                />
+                <textarea
+                    className={styles.input}
+                    placeholder="description"
+                    value={description}
+                    onChange={(e) => {
+                        setDescription(e.target.value)
+                    }}
+                />
+                <button
+                    className={styles.button}
+                    onClick={() => {
+                        createCatFact({
+                            variables: {
+                                title,
+                                description,
+                            },
+                        })
+                    }}
+                >
+                    Add Cat Fact
+                </button>
+                {loading && <p className={styles.description}>Loading...</p>}
+                {error && (
+                    <p className={styles.description}>
+                        Ooops something went wrong
+                    </p>
+                )}
+                {data?.catFacts.map((catFact) => (
+                    <div
+                        key={catFact.id}
+                        className={styles.card}
+                        onClick={() => {
+                            deleteCatFact({
+                                variables: {
+                                    id: catFact.id,
+                                },
+                            })
+                        }}
+                    >
+                        <h2 className={inter.className}>{catFact.title}</h2>
+                        <p className={inter.className}>{catFact.description}</p>
+                    </div>
+                ))}
+            </div>
+        </main>
+    )
 }
