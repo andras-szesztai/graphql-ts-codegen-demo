@@ -8,7 +8,7 @@ const typeDefs = `#graphql
   }
 
   type Query {
-    catFacts: [CatFact]!
+    catFacts: [CatFact!]!
   }
 
   type CatFactId {
