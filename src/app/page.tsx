@@ -9,16 +9,12 @@ import {
     DELETE_CAT_FACT,
     READ_ALL_CAT_FACTS,
 } from '@/lib/operations/catFacts'
+import { CatFact } from '@/lib/types/CatFact'
+import { CatFactCard } from '@/lib/components/CatFactCard'
 
 import styles from './page.module.css'
 
 const inter = Inter({ subsets: ['latin'] })
-
-type CatFact = {
-    id: string
-    title: string
-    description: string
-}
 
 export default function Home() {
     const [title, setTitle] = useState('')
@@ -101,16 +97,16 @@ export default function Home() {
                 >
                     Add Cat Fact
                 </button>
-                {loading && <p className={styles.description}>Loading...</p>}
+                {loading && <p className={inter.className}>Loading...</p>}
                 {error && (
-                    <p className={styles.description}>
+                    <p className={inter.className}>
                         Ooops something went wrong
                     </p>
                 )}
                 {data?.catFacts.map((catFact) => (
-                    <div
+                    <CatFactCard
                         key={catFact.id}
-                        className={styles.card}
+                        {...catFact}
                         onClick={() => {
                             deleteCatFact({
                                 variables: {
@@ -118,10 +114,7 @@ export default function Home() {
                                 },
                             })
                         }}
-                    >
-                        <h2 className={inter.className}>{catFact.title}</h2>
-                        <p className={inter.className}>{catFact.description}</p>
-                    </div>
+                    />
                 ))}
             </div>
         </main>
